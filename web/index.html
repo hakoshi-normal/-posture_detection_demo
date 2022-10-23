@@ -1,0 +1,155 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="style.css">
+        <script type="text/javascript" src="/eel.js"></script>
+
+        <script>
+            eel.expose(set_base64image);
+            function set_base64image(base64image) {
+                document.getElementById("python_video").src = base64image;
+            }
+
+            eel.expose(set_fps);
+            function set_fps(fps) {
+            document.getElementById("fps").innerHTML = "FPS:" + fps;
+            }
+
+            eel.expose(depth_disabled)
+            function depth_disabled() {
+                var element = document.getElementById("depth_check");
+                element.checked = false;
+                element.disabled = true;
+                var element = document.getElementById("none_check");
+                element.checked = true;
+            }
+
+            function change_slider() {
+                var slider = document.getElementById("slider");
+                eel.set_meters(slider.value);
+                document.getElementById("meter_slider").innerHTML = "スライダーで深度の基準値を設定:" + slider.value + "m";
+            }
+
+            function change_slider2() {
+                var slider = document.getElementById("slider2");
+                eel.set_kernelsize(slider.value);
+                document.getElementById("kernel_slider").innerHTML = "スライダーで背景差分のカーネルサイズを設定:" + slider.value;
+            }
+
+            function toolChange(id) {
+                eel.set_tools(id);
+            }
+
+            function algChange(id) {
+                eel.set_algs(id);
+            }
+
+            rec_flg=false
+            function rec_switch() {
+                eel.set_rec();
+                var element = document.getElementById("rec_button");
+                rec_flg = !rec_flg
+                if (rec_flg) {
+                    element.innerText = "録画停止"
+                }else{
+                    element.innerText = "録画開始"
+                }
+                var element = document.getElementById("play_button");
+                element.disabled = !element.disabled;
+            }
+
+            play_flg=false
+            eel.expose(play_switch);
+            function play_switch() {
+                eel.set_play();
+                var element = document.getElementById("play_button");
+                play_flg = !play_flg
+                if (play_flg) {
+                    element.innerText = "一時停止"
+                }else{
+                    element.innerText = "再生"
+                }
+                var element = document.getElementById("rec_button");
+                element.disabled = !element.disabled;
+            }
+
+            eel.expose(set_dirs);
+            function set_dirs(dirs) {
+                var add_code='';
+                for (var idx in dirs){
+                    add_code += '<option value="'+dirs[idx]+'">'+dirs[idx]+'</option>';
+                }
+                var element = document.getElementById("projects");
+                element.innerHTML = add_code;
+            }
+
+            function set_project(value) {
+                eel.set_project(value);
+                var element = document.getElementById("project_name");
+                element.value = "";
+            }
+
+            function set_project_name(value) {
+                eel.set_project(value);
+            }
+
+            function delete_project(){
+                var val = document.getElementById("projects").value;
+                eel.del_project(val);
+            }
+        </script>
+    </head>
+    <body>
+        <img id="python_video" class="video_vw">
+        <div id="fps">FPS:0</div>
+        <fieldset>
+            <legend>骨格検出ツールを選択</legend>
+            <div>
+                <input type="checkbox" onchange="toolChange(0)" checked>
+                <label for="horns">Mediapipe</label>
+            </div>
+            <div>
+                <input type="checkbox" onchange="toolChange(1)">
+                <label for="scales">MoveNet</label>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>背景差分アルゴリズムを選択</legend>
+            <div>
+                <input type="checkbox" id="none_check" onchange="algChange(0) ">
+                <label for="horns">無し</label>
+            </div>
+            <div>
+                <input type="checkbox" id="depth_check" onchange="algChange(1) " checked>
+                <label for="horns">Depth</label>
+            </div>
+            <div>
+                <input type="checkbox" onchange="algChange(2)">
+                <label for="horns">MOG2</label>
+            </div>
+            <div>
+                <input type="checkbox" onchange="algChange(3)">
+                <label for="scales">KNN</label>
+            </div>
+            <div>
+                <input type="checkbox" onchange="algChange(4)">
+                <label for="scales">CNT</label>
+            </div>
+        </fieldset>
+        <div id="meter_slider">スライダーで深度の基準値を設定:1m</div>
+        <input id="slider" class="slider" type="range" value="1" min="0" max="11" step="0.1" onchange="change_slider();">
+        <div id="kernel_slider">スライダーで背景差分のカーネルサイズを設定:1</div>
+        <input id="slider2" class="slider" type="range" value="1" min="0" max="10" step="1" onchange="change_slider2();">
+        <br>
+        <button id="rec_button" onclick="rec_switch()">録画開始</button>
+        <button id="play_button" onclick="play_switch()">再生</button>
+
+        <select id="projects" onchange="set_project(value)">
+
+        </select>
+        <button id="delete_project" onclick="delete_project()">削除</button>
+        <input type="text" id="project_name" placeholder="名前をつけて保存" onchange="set_project_name(value)">
+    </body>
+</html>
