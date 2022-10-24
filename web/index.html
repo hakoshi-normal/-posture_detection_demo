@@ -66,7 +66,7 @@
                 var element = document.getElementById("play_button");
                 play_flg = !play_flg
                 if (play_flg) {
-                    element.innerText = "一時停止"
+                    element.innerText = "停止"
                 }else{
                     element.innerText = "再生"
                 }
@@ -82,6 +82,17 @@
                 }
                 var element = document.getElementById("projects");
                 element.innerHTML = add_code;
+                // 入力フォームをリセット
+                if (dirs.length==1 && dirs[0]=="No Video"){
+                    var element = document.getElementById("project_name");
+                    element.value = "";
+                }
+            }
+
+            eel.expose(play_disabled);
+            function play_disabled(val){
+                var element = document.getElementById("play_button");
+                element.disabled = !!val;
             }
 
             function set_project(value) {
@@ -104,7 +115,7 @@
         <img id="python_video" class="video_vw">
         <div id="fps">FPS:0</div>
         <fieldset>
-            <legend>骨格検出ツールを選択</legend>
+            <legend>姿勢検出ツールを選択</legend>
             <div>
                 <input type="checkbox" onchange="toolChange(0)" checked>
                 <label for="horns">Mediapipe</label>
@@ -116,7 +127,7 @@
         </fieldset>
 
         <fieldset>
-            <legend>背景差分アルゴリズムを選択</legend>
+            <legend>背景マスク手法を選択</legend>
             <div>
                 <input type="checkbox" id="none_check" onchange="algChange(0) ">
                 <label for="horns">無し</label>
@@ -143,13 +154,12 @@
         <div id="kernel_slider">スライダーで背景差分のカーネルサイズを設定:1</div>
         <input id="slider2" class="slider" type="range" value="1" min="0" max="10" step="1" onchange="change_slider2();">
         <br>
-        <button id="rec_button" onclick="rec_switch()">録画開始</button>
-        <button id="play_button" onclick="play_switch()">再生</button>
-
-        <select id="projects" onchange="set_project(value)">
-
-        </select>
-        <button id="delete_project" onclick="delete_project()">削除</button>
-        <input type="text" id="project_name" placeholder="名前をつけて保存" onchange="set_project_name(value)">
+        <div id="player">
+            <input type="text" id="project_name" placeholder="名前をつけて保存" onchange="set_project_name(value)">
+            <button id="rec_button" onclick="rec_switch()">録画開始</button>
+            <select id="projects" onchange="set_project(value)"></select>
+            <button id="play_button" onclick="play_switch()">再生</button>
+            <button id="delete_project" onclick="delete_project()">削除</button>
+        </div>
     </body>
 </html>

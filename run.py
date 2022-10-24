@@ -19,7 +19,16 @@ info = {"meter": 2.0,
         "depth_bool": True,
         "rec": False,
         "play": False,
-        "project": "Project01"}
+        "project": "Project01",
+        "past_name":"",
+        "start_time":0,
+        "f_counter":0}
+
+# saveディレクトリ作成
+try:
+    os.mkdir(f'save')
+except FileExistsError:
+    pass
 
 depth_scale=0.0010000000474974513
 try:
@@ -227,14 +236,24 @@ def draw_debug(debug_image, keypoints):
         cv2.circle(image, keypoint, 3, (0, 0, 0), -1)
     return image
 
-# meter,[mediapipe,movenet],[depth,MOG2, KNN, CNT], kernel, depth_bool
-
 
 def renew_projects():
+    info["past_name"]=""
     files = os.listdir('save')
     dirs = [f for f in files if os.path.isdir(os.path.join('save', f))]
-    eel.set_dirs(dirs)
-    info["project"] = dirs[0]
+    if len(dirs)==0:
+        eel.set_dirs(["No Video"])
+        info["project"] = "No Video"
+        eel.play_disabled(1)
+    else:
+        eel.set_dirs(dirs)
+        info["project"] = dirs[0]
+        eel.play_disabled(0)
+
+def timer_reset():
+    info["f_counter"] = 0
+    info["start"] = time.time()
+
 
 def main(info, depth_scale):
     eel.init('web')
@@ -242,19 +261,23 @@ def main(info, depth_scale):
     @eel.expose
     def set_meters(x):
         info["meter"]=float(x)
+        timer_reset()
     
     @eel.expose
     def set_tools(x):
         info["tools"][x] = not info["tools"][x]
+        timer_reset()
 
     @eel.expose
     def set_algs(x):
         info["algs"][x] = not info["algs"][x]
+        timer_reset()
 
     @eel.expose
     def set_kernelsize(x):
         x = int(x)
         info["kernel"] = np.ones((x,x),np.uint8)
+        timer_reset()
     
     @eel.expose
     def set_rec():
@@ -267,10 +290,13 @@ def main(info, depth_scale):
     @eel.expose
     def set_project(name):
         info["project"] = name
-    
+
     @eel.expose
     def del_project(name):
-        shutil.rmtree(f'save/{name}')
+        try:
+            shutil.rmtree(f'save/{name}')
+        except:
+            pass
         renew_projects()
 
     eel.start(
@@ -295,11 +321,9 @@ def main(info, depth_scale):
     rec_timer = 0
 
     idx = 0
-    play_flg = False
     clipping_distance = 0
 
-    counter=0
-    now = time.time()
+    info["start"] = time.time()
     while True:
         eel.sleep(0.01)
         
@@ -336,48 +360,47 @@ def main(info, depth_scale):
             rec_flg = False
             depth_datas=[]
             color_datas=[]
-            play_flg = False
             # 録画一覧更新
             renew_projects()
 
 
         # 再生
         if info["play"]:
-            if not play_flg: # 初回
-                play_flg = True
+            if info["past_name"]!=info["project"]: # 初回
+                info["past_name"]=info["project"]
                 try:
                     depth_datas = np.load(f'save/{info["project"]}/depth_save.npy')
                     color_datas = np.load(f'save/{info["project"]}/color_save.npy')
                     with open(f'save/{info["project"]}/video_info.csv', 'r') as f:
                         reader = csv.reader(f)
                         info_nums = [row for row in reader][0]
+                    fps = float(info_nums[1])
+                    if info["depth_bool"]: # realsense接続時
+                        clipping_distance_in_meters = float(info["meter"])
+                        depth_scale = float(info_nums[0])
+                        clipping_distance = clipping_distance_in_meters / depth_scale
 
                 except: # ファイルなし
+                    depth_datas = []
+                    color_datas = []
                     eel.play_switch()
                     continue
 
-                fps = float(info_nums[1])
-                if info["depth_bool"]: # realsense接続時
-                    clipping_distance_in_meters = float(info["meter"])
-                    depth_scale = float(info_nums[0])
-                    clipping_distance = clipping_distance_in_meters / depth_scale
-
             try:
+                color_img = color_datas[idx]
                 if info["depth_bool"]:
                     depth_img = depth_datas[idx]
-                color_img = color_datas[idx]
+                    frame = patch_mask(depth_img, color_img, clipping_distance)
+                origin = color_img
+                idx+=1
             except IndexError: # 動画終了（IndexError）
                 idx = 0
                 eel.play_switch()
-            idx+=1
-            if info["depth_bool"]:
-                frame = patch_mask(depth_img, color_img, clipping_distance)
-            origin = color_img
+                continue
 
 
         # リアルタイム深度
         elif info["depth_bool"] and not info["play"]:
-            play_flg = False
             clipping_distance_in_meters = float(info["meter"])
             clipping_distance = clipping_distance_in_meters / depth_scale
             frame, origin = conv_depth()
@@ -455,8 +478,8 @@ def main(info, depth_scale):
         _, imencode_image = cv2.imencode('.jpg', frames)
         base64_image = base64.b64encode(imencode_image)
         eel.set_base64image("data:image/jpg;base64," + base64_image.decode("ascii"))
-        counter+=1
-        eel.set_fps(round(counter/(time.time()-now), 3))
+        info["f_counter"]+=1
+        eel.set_fps(round(info["f_counter"]/(time.time()-info["start"]), 3))
 
 if __name__ == '__main__':
     main(info, depth_scale)
