@@ -13,7 +13,7 @@
 
             eel.expose(set_fps);
             function set_fps(fps) {
-            document.getElementById("fps").innerHTML = "FPS:" + fps;
+                document.getElementById("fps").innerHTML = "FPS:" + fps;
             }
 
             eel.expose(depth_disabled)
@@ -43,6 +43,10 @@
 
             function algChange(id) {
                 eel.set_algs(id);
+            }
+
+            function colorChange(value){
+                eel.set_color(value);
             }
 
             rec_flg=false
@@ -139,7 +143,9 @@
         <input id="slider" class="slider" type="range" value="1" min="0" max="11" step="0.1" onchange="change_slider();">
         <div id="kernel_slider">スライダーで背景差分のカーネルサイズを設定:1</div>
         <input id="slider2" class="slider" type="range" value="1" min="0" max="10" step="1" onchange="change_slider2();">
-        <br>
+        <div id="colorinput">マスク色を選択
+            <input type="color" name="favorite_color" onchange="colorChange(value)">
+        </div>
         <div id="player">
             <input type="text" id="project_name" placeholder="名前をつけて保存" onchange="set_project_name(value)">
             <button id="rec_button" onclick="rec_switch()">録画開始</button>
@@ -147,8 +153,5 @@
             <button id="play_button" onclick="play_switch()">再生</button>
             <button id="delete_project" onclick="delete_project()">削除</button>
         </div>
-        <label>色を選択
-            <input type="color" name="favorite_color">
-        </label>
     </body>
 </html>

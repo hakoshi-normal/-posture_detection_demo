@@ -20,9 +20,10 @@ info = {"meter": 2.0,
         "rec": False,
         "play": False,
         "project": "Project01",
-        "past_name":"",
-        "start_time":0,
-        "f_counter":0}
+        "past_name": "",
+        "start_time": 0,
+        "f_counter": 0,
+        "mask_color": (0,0,0)}
 
 # saveディレクトリ作成
 try:
@@ -103,10 +104,9 @@ def conv_depth():
 
 def patch_mask(depth_image, color_image, clipping_distance):
     # Remove background - Set pixels further than clipping_distance to grey
-    grey_color = 153
     depth_image_3d = np.dstack((depth_image,depth_image,depth_image)) #depth image is 1 channel, color is 3 channels
-    bg_removed = np.where((depth_image_3d > clipping_distance) | (depth_image_3d <= 0), grey_color, color_image)
-
+    bg_removed = np.where((depth_image_3d > clipping_distance) | (depth_image_3d <= 0), info["mask_color"], color_image)
+    bg_removed = bg_removed.astype(np.uint8)
     # Render images:
     #   depth align to color on left
     #   depth on right
@@ -123,12 +123,13 @@ bgs_list = [cv2.createBackgroundSubtractorMOG2(),
 def conv_backsub(img, bgs, kernel):
     mask = bgs.apply(img)
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-    mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
+    mask = np.dstack((mask,mask,mask))
+    img = np.where(mask == (0, 0, 0), info["mask_color"], img)
+    img = img.astype(np.uint8)
     # img[mask == 0] = 0
     # bg = bgs.getBackgroundImage()
-    img = cv2.bitwise_and(img, mask)
+    # img = cv2.bitwise_and(img, mask)
     return img
-
 
 
 
@@ -148,7 +149,8 @@ def media(image, i):
     #BG_COLOR = (192, 192, 192) # gray
     image_height, image_width, _ = image.shape
     # Convert the BGR image to RGB before processing.
-    results = media_models[i].process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+    # results = media_models[i].process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+    results = media_models[i].process(image)
 
 
     if not results.pose_landmarks:
@@ -290,6 +292,13 @@ def main(info, depth_scale):
     @eel.expose
     def set_project(name):
         info["project"] = name
+    
+    @eel.expose
+    def set_color(color_code):
+        R = int(color_code[1:3], 16)
+        G = int(color_code[3:5], 16)
+        B = int(color_code[5:7], 16)
+        info["mask_color"] = (B, G, R)
 
     @eel.expose
     def del_project(name):
@@ -354,6 +363,8 @@ def main(info, depth_scale):
             with open(f'save/{info["project"]}/video_info.csv', 'w') as f:
                 writer = csv.writer(f)
                 writer.writerow([depth_scale,fps])
+            depth_images = np.array(depth_images, dtype=np.uint8)
+            color_images = np.array(color_images, dtype=np.uint8)
             np.save(f'save/{info["project"]}/depth_save.npy', depth_images)
             np.save(f'save/{info["project"]}/color_save.npy', color_images)
             rec_counter = 0
