@@ -3,6 +3,9 @@
 ## 概要
 複数の動的姿勢検出ツールの精度を視覚的に表示するツール．また，背景差分やRealSenseの深度計測を使った背景へのマスク処理を行うことで，姿勢検出の精度向上を検証できる．リアルタイムでの描画の他に録画機能も実装しており，録画後も深度の基準値を変化させて描画できる．
 
+ ![screenshot](https://raw.githubusercontent.com/hakoshi-normal/md_images/main/realsenseGUI_view.png "画面")
+
+
 ## 要件
 このコードは，Windows10でテストしている．
 その他テスト環境での依存ツールは以下．

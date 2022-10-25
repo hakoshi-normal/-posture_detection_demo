@@ -13,7 +13,7 @@
 
             eel.expose(set_fps);
             function set_fps(fps) {
-            document.getElementById("fps").innerHTML = "FPS:" + fps;
+                document.getElementById("fps").innerHTML = "FPS:" + fps;
             }
 
             eel.expose(depth_disabled)
@@ -43,6 +43,10 @@
 
             function algChange(id) {
                 eel.set_algs(id);
+            }
+
+            function colorChange(value){
+                eel.set_color(value);
             }
 
             rec_flg=false
@@ -116,44 +120,32 @@
         <div id="fps">FPS:0</div>
         <fieldset>
             <legend>姿勢検出ツールを選択</legend>
-            <div>
-                <input type="checkbox" onchange="toolChange(0)" checked>
-                <label for="horns">Mediapipe</label>
-            </div>
-            <div>
-                <input type="checkbox" onchange="toolChange(1)">
-                <label for="scales">MoveNet</label>
-            </div>
+            <input type="checkbox" onchange="toolChange(0)" checked>
+            <label for="horns">Mediapipe</label>
+            <input type="checkbox" onchange="toolChange(1)">
+            <label for="scales">MoveNet</label>
         </fieldset>
 
         <fieldset>
             <legend>背景マスク手法を選択</legend>
-            <div>
-                <input type="checkbox" id="none_check" onchange="algChange(0) ">
-                <label for="horns">無し</label>
-            </div>
-            <div>
-                <input type="checkbox" id="depth_check" onchange="algChange(1) " checked>
-                <label for="horns">Depth</label>
-            </div>
-            <div>
-                <input type="checkbox" onchange="algChange(2)">
-                <label for="horns">MOG2</label>
-            </div>
-            <div>
-                <input type="checkbox" onchange="algChange(3)">
-                <label for="scales">KNN</label>
-            </div>
-            <div>
-                <input type="checkbox" onchange="algChange(4)">
-                <label for="scales">CNT</label>
-            </div>
+            <input type="checkbox" id="none_check" onchange="algChange(0) ">
+            <label for="horns">無し</label>
+            <input type="checkbox" id="depth_check" onchange="algChange(1) " checked>
+            <label for="horns">Depth</label>
+            <input type="checkbox" onchange="algChange(2)">
+            <label for="horns">MOG2</label>
+            <input type="checkbox" onchange="algChange(3)">
+            <label for="scales">KNN</label>
+            <input type="checkbox" onchange="algChange(4)">
+            <label for="scales">CNT</label>
         </fieldset>
         <div id="meter_slider">スライダーで深度の基準値を設定:1m</div>
         <input id="slider" class="slider" type="range" value="1" min="0" max="11" step="0.1" onchange="change_slider();">
         <div id="kernel_slider">スライダーで背景差分のカーネルサイズを設定:1</div>
         <input id="slider2" class="slider" type="range" value="1" min="0" max="10" step="1" onchange="change_slider2();">
-        <br>
+        <div id="colorinput">マスク色を選択
+            <input type="color" name="favorite_color" onchange="colorChange(value)">
+        </div>
         <div id="player">
             <input type="text" id="project_name" placeholder="名前をつけて保存" onchange="set_project_name(value)">
             <button id="rec_button" onclick="rec_switch()">録画開始</button>
