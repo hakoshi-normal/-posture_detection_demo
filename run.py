@@ -107,11 +107,6 @@ def patch_mask(depth_image, color_image, clipping_distance):
     depth_image_3d = np.dstack((depth_image,depth_image,depth_image)) #depth image is 1 channel, color is 3 channels
     bg_removed = np.where((depth_image_3d > clipping_distance) | (depth_image_3d <= 0), info["mask_color"], color_image)
     bg_removed = bg_removed.astype(np.uint8)
-    # Render images:
-    #   depth align to color on left
-    #   depth on right
-    # depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
-    # images = np.hstack((bg_removed, depth_colormap))
     return bg_removed
 
 
@@ -126,9 +121,6 @@ def conv_backsub(img, bgs, kernel):
     mask = np.dstack((mask,mask,mask))
     img = np.where(mask == (0, 0, 0), info["mask_color"], img)
     img = img.astype(np.uint8)
-    # img[mask == 0] = 0
-    # bg = bgs.getBackgroundImage()
-    # img = cv2.bitwise_and(img, mask)
     return img
 
 
