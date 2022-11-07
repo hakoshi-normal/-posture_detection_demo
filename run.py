@@ -23,7 +23,8 @@ info = {"meter": 2.0,
         "past_name": "",
         "start_time": 0,
         "f_counter": 0,
-        "mask_color": (0,0,0)}
+        "mask_color": (0,0,0),
+        "colormode": 2}
 
 # saveディレクトリ作成
 try:
@@ -78,7 +79,7 @@ except RuntimeError:
     info["depth_bool"] = False
     info["algs"][1] = False
     info["algs"][0] = True
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
 
 
 def conv_depth():
@@ -119,7 +120,18 @@ def conv_backsub(img, bgs, kernel):
     mask = bgs.apply(img)
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
     mask = np.dstack((mask,mask,mask))
-    img = np.where(mask == (0, 0, 0), info["mask_color"], img)
+    if info["colormode"]==0:
+        colors = img[mask!=(0, 0, 0)].reshape(-1,3)
+        color_avg = np.average(colors, axis=0) # bgr
+        img = np.where(mask == (0, 0, 0), 255-color_avg, img)
+    elif info["colormode"]==1:
+        colors = img[mask!=(0, 0, 0)].reshape(-1,3)
+        color_avg = np.average(colors, axis=0) # bgr
+        val = color_avg.max()+color_avg.min()
+        img = np.where(mask == (0, 0, 0), val-color_avg, img)
+        
+    else:
+        img = np.where(mask == (0, 0, 0), info["mask_color"], img)
     img = img.astype(np.uint8)
     return img
 
@@ -253,26 +265,27 @@ def main(info, depth_scale):
     eel.init('web')
 
     @eel.expose
-    def set_meters(x):
-        info["meter"]=float(x)
-        timer_reset()
-    
-    @eel.expose
-    def set_tools(x):
-        info["tools"][x] = not info["tools"][x]
-        timer_reset()
+    def set_values(key, val):
+        if key=="meter":
+            info[key]=float(val)
+            timer_reset()
+        elif key=="tools" or key=="algs":
+            info[key][val] = not info[key][val]
+            timer_reset()
+        elif key=="kernel":
+            x = int(val)
+            info[key] = np.ones((x,x),np.uint8)
+            timer_reset()
+        elif key=="colormode":
+            info[key] = val
+        elif key=="mask_color":
+            R = int(val[1:3], 16)
+            G = int(val[3:5], 16)
+            B = int(val[5:7], 16)
+            info[key] = (B, G, R)
+        elif key=="project":
+            info[key] = val
 
-    @eel.expose
-    def set_algs(x):
-        info["algs"][x] = not info["algs"][x]
-        timer_reset()
-
-    @eel.expose
-    def set_kernelsize(x):
-        x = int(x)
-        info["kernel"] = np.ones((x,x),np.uint8)
-        timer_reset()
-    
     @eel.expose
     def set_rec():
         info["rec"] = not info["rec"]
@@ -280,17 +293,6 @@ def main(info, depth_scale):
     @eel.expose
     def set_play():
         info["play"] = not info["play"]
-    
-    @eel.expose
-    def set_project(name):
-        info["project"] = name
-    
-    @eel.expose
-    def set_color(color_code):
-        R = int(color_code[1:3], 16)
-        G = int(color_code[3:5], 16)
-        B = int(color_code[5:7], 16)
-        info["mask_color"] = (B, G, R)
 
     @eel.expose
     def del_project(name):
@@ -313,7 +315,6 @@ def main(info, depth_scale):
 
     # プロジェクト一覧更新
     renew_projects()
-
 
     depth_images=[]
     color_images=[]

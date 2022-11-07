@@ -27,26 +27,18 @@
 
             function change_slider() {
                 var slider = document.getElementById("slider");
-                eel.set_meters(slider.value);
+                eel.set_values("meter", slider.value);
                 document.getElementById("meter_slider").innerHTML = "スライダーで深度の基準値を設定:" + slider.value + "m";
             }
 
             function change_slider2() {
                 var slider = document.getElementById("slider2");
-                eel.set_kernelsize(slider.value);
+                eel.set_values("kernel", slider.value);
                 document.getElementById("kernel_slider").innerHTML = "スライダーで背景差分のカーネルサイズを設定:" + slider.value;
             }
 
-            function toolChange(id) {
-                eel.set_tools(id);
-            }
-
-            function algChange(id) {
-                eel.set_algs(id);
-            }
-
-            function colorChange(value){
-                eel.set_color(value);
+            function set_val(key, val){
+                eel.set_values(key, val);
             }
 
             rec_flg=false
@@ -100,13 +92,9 @@
             }
 
             function set_project(value) {
-                eel.set_project(value);
+                eel.set_values("project", value);
                 var element = document.getElementById("project_name");
                 element.value = "";
-            }
-
-            function set_project_name(value) {
-                eel.set_project(value);
             }
 
             function delete_project(){
@@ -120,34 +108,37 @@
         <div id="fps">FPS:0</div>
         <fieldset>
             <legend>姿勢検出ツールを選択</legend>
-            <input type="checkbox" onchange="toolChange(0)" checked>
+            <input type="checkbox" onchange="set_val('tools', 0)" checked>
             <label for="horns">Mediapipe</label>
-            <input type="checkbox" onchange="toolChange(1)">
+            <input type="checkbox" onchange="set_val('tools', 1)">
             <label for="scales">MoveNet</label>
         </fieldset>
 
         <fieldset>
             <legend>背景マスク手法を選択</legend>
-            <input type="checkbox" id="none_check" onchange="algChange(0) ">
+            <input type="checkbox" id="none_check" onchange="set_val('algs', 0)">
             <label for="horns">無し</label>
-            <input type="checkbox" id="depth_check" onchange="algChange(1) " checked>
+            <input type="checkbox" id="depth_check" onchange="set_val('algs', 1)" checked>
             <label for="horns">Depth</label>
-            <input type="checkbox" onchange="algChange(2)">
+            <input type="checkbox" onchange="set_val('algs', 2)">
             <label for="horns">MOG2</label>
-            <input type="checkbox" onchange="algChange(3)">
+            <input type="checkbox" onchange="set_val('algs', 3)">
             <label for="scales">KNN</label>
-            <input type="checkbox" onchange="algChange(4)">
+            <input type="checkbox" onchange="set_val('algs', 4)">
             <label for="scales">CNT</label>
         </fieldset>
         <div id="meter_slider">スライダーで深度の基準値を設定:1m</div>
         <input id="slider" class="slider" type="range" value="1" min="0" max="11" step="0.1" onchange="change_slider();">
         <div id="kernel_slider">スライダーで背景差分のカーネルサイズを設定:1</div>
         <input id="slider2" class="slider" type="range" value="1" min="0" max="10" step="1" onchange="change_slider2();">
-        <div id="colorinput">マスク色を選択
-            <input type="color" name="favorite_color" onchange="colorChange(value)">
+        <div id="colorinput">
+        <input type="radio" name="color" onchange="set_val('colormode',0)">差分部分の補色
+        <input type="radio" name="color" onchange="set_val('colormode',1)">差分部分の反対色
+        <input id="colorinput" type="radio" name="color" onchange="set_val('colormode',2)" checked>マスク色を選択
+        <input type="color" name="favorite_color" onchange="set_val('mask_color', value)">
         </div>
         <div id="player">
-            <input type="text" id="project_name" placeholder="名前をつけて保存" onchange="set_project_name(value)">
+            <input type="text" id="project_name" placeholder="名前をつけて保存" onchange="set_val('project', value)">
             <button id="rec_button" onclick="rec_switch()">録画開始</button>
             <select id="projects" onchange="set_project(value)"></select>
             <button id="play_button" onclick="play_switch()">再生</button>
