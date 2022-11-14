@@ -129,7 +129,18 @@ def conv_backsub(img, bgs, kernel):
         color_avg = np.average(colors, axis=0) # bgr
         val = color_avg.max()+color_avg.min()
         img = np.where(mask == (0, 0, 0), val-color_avg, img)
-        
+    elif info["colormode"]==2:
+        colors = img[mask!=(0, 0, 0)].reshape(-1,3)
+        color_avg = np.average(colors, axis=0) # bgr
+        color = np.where(color_avg>128, 0, 255)
+        img = np.where(mask == (0, 0, 0), color, img)
+    elif info["colormode"]==3:
+        colors = img[mask!=(0, 0, 0)].reshape(-1,3)
+        color_avg = np.average(colors, axis=0) # bgr
+        if sum(color_avg) > 384:
+            img = np.where(mask == (0, 0, 0), np.array([0,0,0]), img)
+        else:
+            img = np.where(mask == (0, 0, 0), np.array([255,255,255]), img)
     else:
         img = np.where(mask == (0, 0, 0), info["mask_color"], img)
     img = img.astype(np.uint8)
