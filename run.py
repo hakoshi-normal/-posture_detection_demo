@@ -79,7 +79,7 @@ except RuntimeError:
     info["depth_bool"] = False
     info["algs"][1] = False
     info["algs"][0] = True
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(0)
 
 
 def conv_depth():
@@ -105,8 +105,30 @@ def conv_depth():
 
 def patch_mask(depth_image, color_image, clipping_distance):
     # Remove background - Set pixels further than clipping_distance to grey
-    depth_image_3d = np.dstack((depth_image,depth_image,depth_image)) #depth image is 1 channel, color is 3 channels
-    bg_removed = np.where((depth_image_3d > clipping_distance) | (depth_image_3d <= 0), info["mask_color"], color_image)
+    depth_image_3d = np.dstack((depth_image,depth_image,depth_image)) # depth image is 1 channel, color is 3 channels
+    if info["colormode"]==0:
+        colors = color_image[depth_image_3d!=(0, 0, 0)].reshape(-1,3)
+        color_avg = np.average(colors, axis=0) # bgr
+        color = 255-color_avg
+    elif info["colormode"]==1:
+        colors = color_image[depth_image_3d!=(0, 0, 0)].reshape(-1,3)
+        color_avg = np.average(colors, axis=0) # bgr
+        val = color_avg.max()+color_avg.min()
+        color = val-color_avg
+    elif info["colormode"]==2:
+        colors = color_image[depth_image_3d!=(0, 0, 0)].reshape(-1,3)
+        color_avg = np.average(colors, axis=0) # bgr
+        color = np.where(color_avg>128, 0, 255)
+    elif info["colormode"]==3:
+        colors = color_image[depth_image_3d!=(0, 0, 0)].reshape(-1,3)
+        color_avg = np.average(colors, axis=0) # bgr
+        if sum(color_avg) > 384:
+            color = np.array([0,0,0])
+        else:
+            color = np.array([255,255,255])
+    else:
+        color = info["mask_color"]
+    bg_removed = np.where((depth_image_3d > clipping_distance) | (depth_image_3d <= 0), color, color_image)
     bg_removed = bg_removed.astype(np.uint8)
     return bg_removed
 
