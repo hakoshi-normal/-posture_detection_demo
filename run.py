@@ -79,7 +79,7 @@ except RuntimeError:
     info["depth_bool"] = False
     info["algs"][1] = False
     info["algs"][0] = True
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(0)
 
 
 def conv_depth():
